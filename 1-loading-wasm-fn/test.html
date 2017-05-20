@@ -1,0 +1,19 @@
+<!doctype html>
+  <title>WASM Test</title>
+  <script>
+    fetch('./test.wasm')
+    .then(res => {
+      if (res.ok)
+        return res.arrayBuffer();
+      throw new Error(`Unable to fetch WASM.`);
+    })
+    .then(bytes => {
+      return WebAssembly.compile(bytes);
+    })
+    .then(module => {
+      return WebAssembly.instantiate(module);
+    })
+    .then(instance => {
+      window.wasmSqrt = instance.exports.sqrt;
+    });
+  </script>
