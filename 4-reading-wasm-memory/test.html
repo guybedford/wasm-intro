@@ -1,0 +1,23 @@
+<!doctype html>
+  <title>WASM Test</title>
+  <script>
+    function fetchAndInstantiateWasm (url, imports) {
+      return fetch(url)
+      .then(res => {
+        if (res.ok)
+          return res.arrayBuffer();
+        throw new Error(`Unable to fetch Web Assembly file ${url}.`);
+      })
+      .then(bytes => WebAssembly.compile(bytes))
+      .then(module => WebAssembly.instantiate(module, imports || {}))
+      .then(instance => instance.exports);
+    }
+
+    fetchAndInstantiateWasm('./program.wasm')
+    .then(m => {
+      const memory = m.memory;
+      const strBuf = new Uint8Array(memory.buffer, m.getStrOffset(), 11);
+      const str = new TextDecoder().decode(strBuf);
+      console.log(str);
+    });
+  </script>
