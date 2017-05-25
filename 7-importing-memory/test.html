@@ -1,0 +1,36 @@
+<!doctype html>
+  <script>
+    function fetchAndCompileWasmModules (urls) {
+      return Promise.all(urls.map(url => {
+        return fetch(url)
+        .then(res => {
+          if (res.ok)
+            return res.arrayBuffer();
+          throw new Error(`Unable to fetch Web Assembly file ${url}.`);
+        })
+        .then(bytes => WebAssembly.compile(bytes));
+      }));
+    }
+
+    let mem = new WebAssembly.Memory({ initial: 1 });
+    fetchAndCompileWasmModules(['./program.wasm', './memory.wasm'])
+    .then(([program, memory]) => {
+      return WebAssembly.instantiate(memory, {
+        env: {
+          memory: mem
+        }
+      })
+      .then(m => {
+        return WebAssembly.instantiate(program, {
+          env: {
+            malloc: m.exports.malloc,
+            free: m.exports.free,
+            memory: mem
+          }
+        });
+      })
+      .then(m => {
+        console.log(m.exports.createRecord(2, 1.1, 2.2));
+      });
+    });
+  </script>
